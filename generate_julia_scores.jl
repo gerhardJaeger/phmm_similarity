@@ -3,8 +3,11 @@ Sample 1,000 ASJP string pairs from the lexibank pruned wordlist,
 compute string_similarity for each using the Julia PHMM implementation,
 and save (w1, w2, julia_score) to test_pairs.csv.
 
-Run from: worldtree_msa/code/
-  julia ../../phmm_similarity/generate_julia_scores.jl
+Requires the worldtree_msa repository at ../worldtree_msa (for the Julia
+source files and lexibank wordlist data).  PHMM parameter files are
+bundled in this repository.
+
+  julia generate_julia_scores.jl
 """
 
 using Pkg
@@ -13,23 +16,21 @@ Pkg.activate(@__DIR__)   # minimal env in phmm_similarity/
 const WORLDTREE = joinpath(@__DIR__, "../worldtree_msa/code")
 cd(WORLDTREE)
 
+using ArgCheck
 using CSV
 using DataFrames
+using Distributions
 using JSON
+using LinearAlgebra
 using Random
 using StatsFuns
-
-using ArgCheck
-using Distributions
-using LinearAlgebra
-using JSON
 
 include(joinpath(WORLDTREE, "phmm.jl"))
 include(joinpath(WORLDTREE, "viterbi.jl"))
 
 ##
 
-params = open(joinpath(WORLDTREE, "phmm_parameters.json"), "r") do f
+params = open(joinpath(@__DIR__, "phmm_parameters.json"), "r") do f
     JSON.parse(f)
 end
 
@@ -40,7 +41,7 @@ lp = Matrix{Float64}(hcat(params["lp"]...))
 lq = Vector{Float64}(params["lq"])
 η  = Float64(first(params["eta"]))
 
-sound_df = CSV.File(joinpath(WORLDTREE, "sound_probabilities.csv")) |> DataFrame
+sound_df = CSV.File(joinpath(@__DIR__, "sound_probabilities.csv")) |> DataFrame
 sounds = first.(sound_df.sounds)
 sound_probs = sound_df.soundProbabilities
 
@@ -92,6 +93,6 @@ julia_scores = [string_similarity(w1s[i], w2s[i]) for i in 1:n]
 
 out = DataFrame(w1=w1s, w2=w2s, julia_score=julia_scores)
 
-out_path = joinpath(@__DIR__, "../phmm_similarity/test_pairs.csv")
+out_path = joinpath(@__DIR__, "test_pairs.csv")
 CSV.write(out_path, out)
 @info "Saved $n pairs to $out_path"

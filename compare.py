@@ -11,11 +11,10 @@ import pandas as pd
 from phmm import load_phmm, string_similarity
 
 here = Path(__file__).parent
-worldtree = here.parent / "worldtree_msa" / "code"
 
 p, sound_probs, eta = load_phmm(
-    worldtree / "phmm_parameters.json",
-    worldtree / "sound_probabilities.csv",
+    here / "phmm_parameters.json",
+    here / "sound_probabilities.csv",
 )
 
 pairs = pd.read_csv(here / "test_pairs.csv", keep_default_na=False)
